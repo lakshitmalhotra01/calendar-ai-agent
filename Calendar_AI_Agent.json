@@ -1,0 +1,186 @@
+{
+  "name": "Calendar_AI_Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hi 👋  \nI’m your Calendar AI Assistant 🤖📅  \n\nYou can say:\n• \"Block my calendar tomorrow at 2 PM\"\n• \"Schedule a meeting today from 4 to 5\"\n\nWhat would you like to schedule?\n",
+        "availableInChat": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7cada293-b191-4715-a950-3d0381d02b5e",
+      "name": "When chat message received",
+      "webhookId": "2bcf4a90-a824-43ca-aee3-8b6bcaa29510"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a smart calendar assistant.\n\nYour task is to extract structured event details from the user's message.\n\nExtract the following fields:\n- event_title\nDate format must be YYYY-MM-DD only.\nNever return MM/DD/YYYY.\n\n- start_date\n- start_time\n- end_time\n\nRules:\n- If the user says \"today\" or \"tomorrow\", convert it to the correct date.\n- If the end time is not provided, assume the event duration is 1 hour.\n- Use 24-hour time format.\n- Date format must be YYYY-MM-DD.\n- Time format must be HH:mm.\n- Respond ONLY with valid JSON.\n- Do not include explanations, greetings, or extra text.\n\nExample response:\n{\n  \"event_title\": \"Team Meeting\",\n  \"start_date\": \"2026-01-30\",\n  \"start_time\": \"14:00\",\n  \"end_time\": \"15:00\"\n}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "37eb423c-16e1-4b16-89b5-98232e6b94bd",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.1-8b-instant",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        432,
+        288
+      ],
+      "id": "506444ac-5248-4de2-a4ac-3bbd2cac3f06",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "56lyUWvLbwfun5Q8",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ab4b67ce-a2c0-48c7-95d7-1431695ccb4b",
+              "name": "title",
+              "value": "={{ JSON.parse($json.output).event_title }}\n\n",
+              "type": "string"
+            },
+            {
+              "id": "2190779c-986d-4836-8933-83e91d8c8a3d",
+              "name": "startDate",
+              "value": "={{ JSON.parse($json.output).start_date }}",
+              "type": "string"
+            },
+            {
+              "id": "483ab99d-c503-4187-b325-e5a9f8b8507a",
+              "name": "startTime",
+              "value": "={{ JSON.parse($json.output).start_time }}",
+              "type": "string"
+            },
+            {
+              "id": "3fd7e504-8e21-49d5-9735-85c4cc0a221b",
+              "name": "endTime",
+              "value": "={{ JSON.parse($json.output).end_time }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        0
+      ],
+      "id": "9cc42130-d9aa-46ef-808d-88e5f4c2cf1e",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "lakshitmalhotra383@gmail.com",
+          "mode": "list",
+          "cachedResultName": "lakshitmalhotra383@gmail.com"
+        },
+        "start": "2026-01-30T14:00:00",
+        "end": "2026-01-30T18:38:55",
+        "additionalFields": {
+          "summary": "{{$json.title}}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        816,
+        0
+      ],
+      "id": "053b66ce-fc49-4240-942b-09d665846b7b",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "2OQgqvph0ranEek5",
+          "name": "Google Calendar account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "ec523464-bb63-4fb5-a6b5-b29cc0495535",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "46a0a30200b2676b86788872a9d8797248b8931d322255a214bd7b0effbe1f98"
+  },
+  "id": "Lb3z9U_GcmmFdKTx-nrk-",
+  "tags": []
+}
